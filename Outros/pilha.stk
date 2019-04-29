@@ -1,0 +1,31 @@
+	valor-l n
+	push 1024
+	:=
+	pop
+	valor-l div
+	push 2
+	:=
+	pop
+	valor-l i
+	push 0
+	:=
+	pop
+rotulo L1:
+	valor-r i
+	push 10
+	<
+	gofalse L2
+	valor-l n
+	valor-r n
+	valor-r div
+	/
+	:=
+	pop
+	valor-l i
+	valor-r i
+	push 1
+	+
+	:=
+	pop
+	goto L1
+rotulo L2:

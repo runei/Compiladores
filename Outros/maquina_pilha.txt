@@ -1,0 +1,13 @@
+CMD -> push cte     { pilha.push(cte) }
+CMD -> pop          { pilha.pop() }
+CMD -> +            { res = calcular("+") 
+                      pilha.push(res) }
+                      
+CMD -> -            { res = calcular("-") 
+                      pilha.push(res) }
+                      
+CMD -> *            { res = calcular("*") 
+                      pilha.push(res) }
+                      
+CMD -> /            { res = calcular("/") 
+                      pilha.push(res) }

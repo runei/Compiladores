@@ -1,0 +1,232 @@
+COMANDO -> { CMD.fim = COMANDO.fim; CMD.cont = COMANDO.cont } CMD ; { COMANDO.cod = CMD.cod; }
+COMANDO -> { LISTA_CHAVES.fim = COMANDO.fim; LISTA_CHAVES.cont = COMANDO.cont } LISTA_CHAVES { COMANDO.cod = LISTA_CHAVES.cod }
+COMANDO -> { SPV.fim = COMANDO.fim; SPV.cont = COMANDO.cont } SPV PV { COMANDO.place = SPV.place; COMANDO.cod = SPV.cod; }
+COMANDO -> ;
+PV -> ;
+PV -> ¢
+LISTA_COM_OBR -> { COMANDO.fim = LISTA_COM_OBR.fim; COMANDO.cont = LISTA_COM_OBR.cont; } 
+                 COMANDO { LISTA_COM.fim = LISTA_COM_OBR.fim; LISTA_COM.cont = LISTA_COM_OBR.cont; }
+                 LISTA_COM { LISTA_COM_OBR.cod = COMANDO.cod + LISTA_COM_OBR.cod }
+LISTA_COM -> { LISTA_COM_OBR.fim = LISTA_COM.fim; LISTA_COM_OBR.cont = LISTA_COM.cont; } LISTA_COM_OBR { LISTA_COM.cod = LISTA_COM_OBR.cod }
+LISTA_COM -> ¢ 
+LISTA_CHAVES -> { LISTA_COM.fim = LISTA_CHAVES.fim; LISTA_COM.cont = LISTA_CHAVES.cont; bloco_atual++; } 
+                { LISTA_COM } { LISTA_CHAVES.cod = LISTA_COM.cod; deletaBlocoTabelaSimbolos(bloco_atual); }
+SPV -> while P { COMANDO.fim = geralabel(); COMANDO.continue = geralabel(); } 
+        COMANDO { SPV.cod = COMANDO.continue + ":" + P.cod + "if " + P.place + " == 0 goto " + COMANDO.fim +
+                            COMANDO.cod + "goto " + COMANDO.continue + COMANDO.fim + ":";
+                }
+SPV -> for (COMP0_1; COMP0_2; COMP0_3) { inicio = geralabel(); COMANDO.fim = geralabel(); COMANDO.continue = geralabel(); } 
+        COMANDO { SPV.cod = COMP0_1.cod + inicio + ":" + COMP0_2.cod +
+                            "if " + COMP0_2.place + " == 0 goto " + COMANDO.fim +
+                            COMANDO.cod + COMANDO.continue + ":" + COMP0_3.cod +
+                            "goto " + inicio + COMANDO.fim + ":"
+        }
+SPV -> if P COMANDO ELSE { SPV.cod = P.cod + "if " + P.place + " == 0 goto " + ELSE.continue +
+                                     COMANDO.cod + "goto " + ELSE.fim + ELSE.cod + ELSE.fim + ":";
+                            }
+SPV -> switch (id) { p = procura_tab(id); 
+                    if (p != null) {
+                        if (p.tipo == int || p.tipo == char) {
+                            CASE.place = id; CASE.tipo = p.tipo; CASE.cont = SPV.cont; CASE.fim = geralabel();
+                        } else {
+                            throw Erro;
+                        }
+                        bloco_atual++;
+                    } else {
+                        throw Erro;
+                    } 
+                } { CASE } { SPV.cod = CASE.cod + CASE.fim + ":"; deletaBlocoTabelaSimbolos(bloco_atual); }
+SPV -> DEC { SPV.tipo = DEC.tipo; SPV.place = DEC.place; SPV.cod = DEC.cod; }
+CMD -> do { COMANDO.fim = geralabel(); COMANDO.continue = geralabel(); } 
+        COMANDO while P { CMD.cod = COMANDO.continue + ":" + COMANDO.cod + "if " + P.place + " == 0 goto " + COMANDO.fim + 
+                                    "goto " + COMANDO.continue + COMANDO.fim + ":" }
+CMD -> COMP0 { CMD.cod = COMP0.cod; }
+CMD -> break { CMD.cod = "goto " + CMD.fim }
+CMD -> continue { CMD.cod = "goto " + CMD.continue }
+CMD -> return COMP0 { CMD.cod = COMP0.cod + "pop " + COM0 }
+ELSE -> else COMANDO { ELSE.continue = geralabel(); ELSE.fim = geralabel(); 
+                       ELSE.cod = ELSE.continue + ":" + COMANDO.cod;
+}
+ELSE -> ¢ { ELSE.continue = geralabel(); ELSE.fim = ELSE.continue;  }
+CASE -> case EXPFIM: LISTA_COM { CASE1.cont = CASE.cont; CASE1.fim = CASE.fim; CASE1.place = CASE.place; CASE1.tipo = CASE.tipo }
+                                CASE1 { codconvtipo = '';
+                                        if ((EXPFIM.tipo == int || EXPFIM.tipo == char) && (verificatipo(EXP2.htipo, EXP1.tipo, &EXP2.stipo, &codconvtipo))
+                                            label = geralabel(); 
+                                            CASE.cod = EXPFIM.cod + "if" + CASE.place + " != " + EXPFIM.place + " goto " + label + LISTA_COM.cod + label + ":" + CASE1.cod }
+                                        } else {
+                                            throw Erro;
+                                        }
+CASE -> default: LISTA_COM_OBR { CASE.cod = LISTA_COM.cod + "goto " + CASE.fim; }
+CASE -> ¢
+P -> (COMP0) { P.place = COMP0.place; P.cpod = COMP0.cod; }
+DEC -> TIPO id { if(insere_tab(id, TIPO.tipo) {
+                    VARFUNC.htipo = TIPO.tipo; 
+                    VARFUNC.hcod = "" 
+                    VARFUNC.hlex = id;
+                } 
+       VARFUNC { DEC.place = VARFUNC.splace; DEC.tipo = VARFUNC.stipo; DEC.cod = VARFUNC.scod; }
+TIPO -> int { TIPO.tipo = int; }
+TIPO -> char { TIPO.tipo = char; }
+TIPO -> double { TIPO.tipo = double; }
+TIPO -> float { TIPO.tipo = float; }
+VARFUNC -> { ATRIBDEC.hplace = VARFUNC.hplace; ATRIBDEC.htipo = VARFUNC.htipo; ATRIBDEC.hcod = VARFUNC.hcod;  } 
+           ATRIBDEC { VARFUNC.splace = ATRIBDEC.splace; VARFUNC.stipo = ATRIBDEC.stipo; ATRIBDEC.scod = VARFUNC.scod; }
+VARFUNC ->  { simb = tabela_simbolos.back(); simb.tipo_dec == funcao; if(simb.bloco != 0) throw Erro;  } 
+            (PARAM) { simb.args = PARAM.args; } 
+            LISTA_CHAVES { VARFUNC.splace = VARFUNC.hplace; VARFUNC.stipo = VARFUNC.htipo; VARFUNC.scod = VARFUNC.splace + ":\npush _BP\b_BP = _SP" + addcodparam(simb.args) + LISTA_CHAVES.cod + "pop _BP"; } 
+ATRIBDEC -> { ATRIB.hplace = ATRIBDEC.hplace; ATRIB.hcod = ATRIBDEC.hcod; ATRIB.htipo = ATRIBDEC.htipo; } 
+            ATRIB { X.htipo = ATRIB.stipo; X.hplace = ATRIB.splace; X.hcod = ATRIB.scod; } 
+            X { ATRIBDEC.splace = X.splace; ATRIBDEC.stipo = X.stipo; ATRIBDEC.scod = X.scod; }
+ATRIBDEC -> { X.hplace = ATRIBDEC.hplace; X.hcod = ATRIBDEC.hcod; X.htipo = ATRIBDEC.htipo; }
+            X { ATRIBDEC.splace = X.splace; ATRIBDEC.stipo = X.stipo; ATRIBDEC.scod = X.scod; }
+VAR -> id { insere_tab(id, VAR.htipo); ATRIBDEC.hplace = id; ATRIBDEC.htipo = VAR.htipo; ATRIBDEC.hcod = ATRIBDEC.scod; } 
+       ATRIBDEC { VAR.splace = ATRIBDEC.splace; VAR.scod = ATRIBDEC.scod; VAR.stipo = ATRIBDEC.stipo; }
+X -> , { VAR.hplace = X.hplace; VAR.hcod = X.hcod; VAR.htipo = X.htipo; } 
+     VAR { X.splace = VAR.splace; X.stipo = VAR.stipo; X.scod = VAR.scod; }
+X -> ; { X.splace = X.hplace; X.stipo = X.htipo; X.scod = X.hcod; }
+PARAM -> PARAM1
+PARAM -> ¢
+PARAM1 -> TIPO id { if (procuraParametro(id) == 0) PARAM1.args.insert(id); } PARAMS
+PARAMS -> , PARAM1
+PARAMS -> ¢
+
+COMP0 -> COMP2 { COMP1.hplace = COMP2.place; COMP1.hcod = COMP2.cod; COMP1.htipo = COMP2.tipo } 
+         COMP1 { COMP0.place = COMP1.splace; COMP0.cod = COMP2.scod; COMP0.tipo = COMP1.stipo; }
+COMP1 -> || COMP2 { COMP1_1.hplace = geratemp();
+                    COMP1_1.htipo = int;
+                    COMP1_1.hcod = COMP1.hcod + COMP2.cod + "\n " + COMP1_1.hplace + " = " + COMP1.hplace + " or " + COMP2.place; }
+            COMP1_1 { COMP1.s = COMP1_1.s; }
+COMP1 -> ¢ { COMP1.splace = COMP1.hplace; COMP1.scod = COMP1.hcod; COMP1.stipo = COMP1.htipo }
+COMP2 -> COMP4 { COMP3.hplace = COMP4.place; COMP3.hcod = COMP4.cod; COMP3.htipo = COMP4.tipo } 
+         COMP3 { COMP2.place = COMP3.splace; COMP2.cod = COMP3.scod; COMP2.tipo = COMP3.stipo; }
+COMP3 -> && COMP4 { COMP3_1.hplace = geratemp();
+                    COMP3_1.htipo = int;
+                    COMP3_1.hcod = COMP3.hcod + COMP4.cod + "\n " + COMP3_1.hplace + " = " + COMP3.hplace + " or " + COMP4.place; }
+            COMP3_1 { COMP3.s = COMP3_1.s }
+COMP3 -> ¢ { COMP3.splace = COMP3.hplace; COMP3.scod = COMP3.hcod; COMP3.stipo = COMP3.htipo }
+COMP4 -> COMP6 { COMP5.hplace = COMP6.place; COMP5.hcod = COMP6.cod; COMP5.htipo = COMP6.tipo }  
+         COMP5 { COMP4.place = COMP5.splace; COMP4.cod = COMP5.scod; COMP4.tipo = COMP5.stipo; }
+COMP5 -> COMPIGDIFF COMP6 { COMP5_1.hplace = geratemp(); 
+                            COMP5_1.htipo = int;
+                            true = geralabel();
+                            false = geralabel();
+                            COMP5_1.hcod = COMP5.hcod + COMP6.cod + "\n" +
+                                         "if " + COMP5.hplace + COMPIGDIFF.op + COMP6.place + "goto " + true + "\n" 
+                                         COMP5_1.hplace " = 0 \n" +
+                                         "goto " + false + "\n" +
+                                         + true + ": " + COMP5_1.hplace " = 1 \n"
+                                         + false + ":"; }
+                    COMP5_1 { COMP5.s = COMP5_1.s }
+COMPIGDIFF -> == { COMPOPR.op = "==" }
+COMPIGDIFF -> != { COMPOPR.op = "!=" }
+COMP5 -> ¢ { COMP5.splace = COMP5.hplace; COMP5.scod = COMP5.hcod; COMP5.stipo = COMP5.htipo }
+COMP6 -> EXP1 { COMP7.hplace = EXP1.place; COMP7.hcod = EXP1.cod; COMP7.htipo = EXP1.tipo }  
+         COMP7 { COMP6.place = COMP7.splace; COMP6.cod = COMP7.scod; COMP6.tipo = COMP7.stipo; }
+COMP7 -> COMPOPR EXP1 {  COMP7_1.hplace = geratemp(); 
+                         COMP7_1.htipo = int;
+                         true = geralabel();
+                         false = geralabel();
+                         COMP7_1.hcod = COMP7.hcod + EXP1.cod + "\n" +
+                                      "if " + COMP7.hplace + COMPOPR.op + EXP1.place + "goto " + true + "\n" 
+                                      COMP7_1.hplace = 0 + "\n" +
+                                      "goto " + false + "\n" +
+                                      + true + ":" + COMP7_1.hplace + " = 1\n"
+                                      + false + ":"; }
+                COMP7_1 { COMP7.s = COMP7_1.s; }
+COMP7 -> ¢ { COMP7.s = COMP7.h }
+COMPOPR -> >= { COMPOPR.op = ">=" }
+COMPOPR -> > { COMPOPR.op = ">" }
+COMPOPR -> < { COMPOPR.op = "<" }
+COMPOPR -> <= { COMPOPR.op = "<=" }
+EXP1 -> EXP3 { EXP2.hplace = EXP3.place; EXP2.hcod = EXP3.cod; EXP2.htipo = EXP3.tipo } 
+        EXP2 { EXP1.place = EXP2.splace; EXP1.cod = EXP2.scod; EXP1.tipo = EXP2.stipo; }
+EXP2 -> + EXP3 { codconvtipo = '';
+                 if (verificatipo(EXP2.htipo, EXP3.tipo, &EXP2_1.htipo, &codconvtipo)) {
+                    EXP2_1.hplace = geratemp(); 
+                    EXP2_1.hcod = EXP2.hcod + EXP3.cod + codconvtipo + "\n" + EXP2_1.hplace + "=" + EXP2.hplace + " + " EXP3.place; 
+                 } else {
+                    throw Erro;
+                 }
+                }
+        EXP2_1 { EXP2.s = EXP2_1.s }
+EXP2 -> - EXP3 { codconvtipo = '';
+                 if (verificatipo(EXP2.htipo, EXP3.tipo, &EXP2_1.htipo, &codconvtipo)) {
+                    EXP2_1.hplace = geratemp(); 
+                    EXP2_1.hcod = EXP2.hcod + EXP3.cod + codconvtipo + "\n" + EXP2_1.hplace + "=" + EXP2.hplace + " - " EXP3.place; 
+                 } else {
+                    throw Erro;
+                 }
+                }
+        EXP2_1 { EXP2.s = EXP2_1.s }
+EXP2 -> ¢ { EXP2.s = EXP2.h }
+EXP3 -> EXP5 { EXP4.hplace = EXP5.place; EXP4.hcod = EXP5.cod; EXP4.htipo = EXP5.tipo }  
+        EXP4 { EXP3.place = EXP4.splace; EXP3.cod = EXP4.scod; EXP3.tipo = EXP4.stipo; }
+EXP4 -> * EXP5 { codconvtipo = '';
+                 if (verificatipo(EXP4.htipo, EXP5.tipo, &EXP4_1.htipo, &codconvtipo)) {
+                    EXP4_1.hplace = geratemp(); 
+                    EXP4_1.hcod = EXP4.hcod + EXP5.cod + codconvtipo + "\n" + EXP4_1.hplace + "=" + EXP4.hplace + " * " EXP3.place; 
+                 } else {
+                    throw Erro;
+                 }
+                }
+        EXP4_1 { EXP4.s = EXP4_1.s; }
+EXP4 -> / EXP5 { codconvtipo = '';
+                 if (verificatipo(EXP4.htipo, EXP5.tipo, &EXP4_1.htipo, &codconvtipo)) {
+                    EXP4_1.hplace = geratemp(); 
+                    EXP4_1.hcod = EXP4.hcod + EXP5.cod + codconvtipo + "\n" + EXP4_1.hplace + "=" + EXP4.hplace + " / " EXP3.place; 
+                 } else {
+                    throw Erro;
+                 }
+                }
+        EXP4_1 { EXP4.s = EXP4_1.s; }
+EXP4 -> % EXP5 { if (EXP4.htipo == int && EXP5.tipo == int) {
+                codconvtipo = '';
+                 if (verificatipo(EXP4.htipo, EXP5.tipo, &EXP4_1.htipo, &codconvtipo)) {
+                    EXP4_1.hplace = geratemp(); 
+                    EXP4_1.htipo = int;
+                    EXP4_1.hcod = EXP4.hcod + EXP5.cod + codconvtipo + "\n" + EXP4_1.hplace + "=" + EXP4.hplace + " % " EXP3.place; 
+                 } else {
+                    throw Erro;
+                 }
+                }
+        EXP4_1 { EXP4.s = EXP4_1.s; }
+EXP4 -> ¢ { EXP4.splace = EXP4.hplace; EXP4.scod = EXP4.hcod; EXP4.stipo = EXP4.htipo; }
+EXP5 -> -EXP5_1 { EXP5.place = geratemp(); EXP5.cod = EXP5_1.cod + "\n" + EXP5.place " = -" EXP5.place; EXP5.tipo = EXP5_1.tipo; }
+EXP5 -> +EXP5_1 { EXP5.place = EXP5_1.place; EXP5.cod = EXP5_1.cod; EXP5.tipo = EXP5_1.tipo; } 
+EXP5 -> !EXP5_1   { EXP5.place = geratemp(); EXP5.cod = EXP5_1.cod + "\n" + EXP5.place " = not " + EXP5_1.place; EXP5.tipo = EXP5_1.tipo; }
+EXP5 -> EXPFIM { EXP5.place = EXPFIM.place; EXP5.cod = EXPFIM.cod; EXP5.tipo = EXPFIM.tipo; }
+EXPFIM -> P { EXPFIM.place = P.place; EXPFIM.cpod = P.cod; EXPFIM.tipo = P.stipo; }
+EXPFIM -> id {  p = procura_tab(id); 
+                if (p != null) {
+                    PROXID.h = p;
+                } else {
+                    throw Erro;
+                }
+             } 
+          PROXID { EXPFIM.place = PROXID.splace; EXPFIM.cod = PROXID.scod; EXPFIM.tipo = PROXID.stipo; }
+EXPFIM -> cte { EXPFIM.place = geratemp(); EXPFIM.cod = EXPFIM.place + " = " + cte; EXPFIM.tipo = int; }
+EXPFIM -> cte.cte { EXPFIM.place = geratemp(); EXPFIM.cod = EXPFIM.place + " = " + cte; EXPFIM.tipo = float; }
+EXPFIM -> char { EXPFIM.place = geratemp(); EXPFIM.cod = EXPFIM.place + " = " + cte; EXPFIM.tipo = char; }
+PROXID -> { ATRIB.hplace = PROXID.hplace; ATRIB.hcod = PROXID.hcod; ATRIB.htipo = PROXID.htipo; } 
+          ATRIB { PROXID.splace = ATRIB.splace; PROXID.scod = ATRIB.scod; PROXID.stipo = ATRIB.stipo; }
+ATRIB -> = COMP0 { ATRIB.splace = ATRIB.hplace; 
+                   ATRIB.stipo = ATRIB.htipo;
+                   codconvtipo = '';
+                   if (coonvertetipo(&COMP0.tipo, ATRIB.stipo, &codconvtipo)) {
+                      ATRIB.scod = COMP0.scod + ATRIB.hcod + codconvtipo + "\n" + ATRIB.splace + " = " + COMP0.place;
+                   } else {
+                      throw Erro;
+                   }
+                 }
+ 
+PROXID -> (ENVIAPARAM)  { if (ENVIAPARAM.args.size() != PROXID.hargs.size()) throw Erro;
+                          for(i : ENVIAPARAM.args) PROXID.scod += i.cod + "param " + i.place;
+                          PROXID.scod += "call " + PROXID.hid;
+                        }
+PROXID -> ¢
+ENVIAPARAM -> ENVIAPARM1
+ENVIAPARAM -> ¢
+ENVIAPARM1 -> COMP0 { ENVIAPARM1.sarg.insert(COMP0.s); } ENVIAPARAMS
+ENVIAPARAMS -> , ENVIAPARM1
+ENVIAPARAMS -> ¢
+
